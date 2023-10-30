@@ -1,0 +1,27 @@
+in 
+pop rdx
+push 1   
+pop rbx
+push 0
+pop rax
+
+call fact
+push rbx
+out
+hlt
+
+fact:
+    push 1
+    push rax
+    add
+    pop rax
+    push rax
+    push rbx
+    mul
+    pop rbx
+    push rax
+    push rdx
+    je return
+        call fact
+    return:
+        ret

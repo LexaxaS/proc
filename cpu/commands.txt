@@ -1,0 +1,177 @@
+DEF_CMD(HLT, -1, false,
+    {
+    })
+
+
+DEF_CMD(OUT, 0, false,
+    {
+    printf("out = %llg\n", ((double) stackPop(cpu->stk)) / multiplier);
+    })
+
+DEF_CMD(PUSH, 1, true,
+    {
+    if (com & ARG_FORMAT_REG)
+        cpu->regs[0] = cpu->regs[codeArr[++elnum]];
+    if (com & ARG_FORMAT_IMMED)
+        cpu->regs[0] += codeArr[++elnum] * multiplier;
+    if (com & ARG_FORMAT_RAM)
+        stackPush(cpu->stk, cpu->ram[cpu->regs[0] / multiplier]);
+    else
+        stackPush(cpu->stk, cpu->regs[0]);
+    cpu->regs[0] = 0;
+    })
+
+DEF_CMD(POP, 2, true,
+    {
+    if (com & ARG_FORMAT_RAM)
+        {
+        if (com & ARG_FORMAT_REG)
+            cpu->regs[0] = cpu->regs[codeArr[++elnum]] / multiplier;
+        if (com & ARG_FORMAT_IMMED)
+            cpu->regs[0] += codeArr[++elnum];
+        cpu->ram[cpu->regs[0]] = stackPop(cpu->stk);
+        }
+    else
+        {
+        if (com & ARG_FORMAT_REG)
+            {
+            size_t regnum = codeArr[++elnum];
+            cpu->regs[regnum] = stackPop(cpu->stk);
+            if (com & ARG_FORMAT_IMMED)
+                cpu->regs[regnum] += codeArr[++elnum] * multiplier;
+            }
+        else
+            return CODEARR_ERROR;
+        }
+    cpu->regs[0] = 0;
+    })
+
+DEF_CMD(JA, 3, true, 
+    {
+    cmdel_t b = stackPop(cpu->stk);
+    cmdel_t a = stackPop(cpu->stk);
+    if (a > b)
+        elnum = codeArr[elnum + 1] - 1;
+    else
+        elnum++;
+    })
+
+DEF_CMD(JAE, 4, true, 
+    {
+    cmdel_t b = stackPop(cpu->stk);
+    cmdel_t a = stackPop(cpu->stk);
+    if (a >= b)
+        elnum = codeArr[elnum + 1] - 1;
+    else
+        elnum++;
+    })
+
+DEF_CMD(JB, 5, true, 
+    {
+    cmdel_t b = stackPop(cpu->stk);
+    cmdel_t a = stackPop(cpu->stk);
+    if (a < b)
+        elnum = codeArr[elnum + 1] - 1;
+    else
+        elnum++;
+    })
+
+DEF_CMD(JBE, 6, true, 
+    {
+    cmdel_t b = stackPop(cpu->stk);
+    cmdel_t a = stackPop(cpu->stk);
+    if (a <= b)
+        elnum = codeArr[elnum + 1] - 1;
+    else
+        elnum++;
+    })
+
+DEF_CMD(JE, 7, true, 
+    {
+    cmdel_t b = stackPop(cpu->stk);
+    cmdel_t a = stackPop(cpu->stk);
+    if (a == b)
+        elnum = codeArr[elnum + 1] - 1;
+    else
+        elnum++;
+    })
+
+DEF_CMD(JNE, 8, true, 
+    {
+    cmdel_t b = stackPop(cpu->stk);
+    cmdel_t a = stackPop(cpu->stk);
+    if (a != b)
+        elnum = codeArr[elnum + 1] - 1;
+    else
+        elnum++;
+    })
+
+DEF_CMD(JMP, 9, true, 
+    {
+    elnum = codeArr[elnum + 1] - 1;
+    })
+
+DEF_CMD(CALL, 10, true,
+    {
+    stackPush(cpu->callStack, elnum);
+    elnum = codeArr[elnum + 1] - 1;
+    })
+
+DEF_CMD(RET, 11, false,
+    {
+    elnum = stackPop(cpu->callStack) + 1;
+    })
+
+DEF_CMD(IN, 12, false,
+    {
+    printf("Please, enter a number\n");
+    elem_t num = 0;
+    scanf("%d", &num);
+    stackPush(cpu->stk, num * multiplier);
+    })
+
+DEF_CMD(ADD, 13, false,
+    {
+    stackPush(cpu->stk, stackPop(cpu->stk) + stackPop(cpu->stk));
+    })
+
+DEF_CMD(SUB, 14, false,
+    {
+    elem_t a = stackPop(cpu->stk);  
+    elem_t b = stackPop(cpu->stk);
+    stackPush(cpu->stk, b - a);
+    })
+
+DEF_CMD(MUL, 15, false,
+    {
+    elem_t a = stackPop(cpu->stk);  
+    elem_t b = stackPop(cpu->stk);
+    stackPush(cpu->stk, a * b / multiplier);
+    })
+
+DEF_CMD(DIV, 16, false,
+    {
+    elem_t a = stackPop(cpu->stk);  
+    elem_t b = stackPop(cpu->stk);
+    stackPush(cpu->stk, (b / (a / multiplier)));
+    })
+
+DEF_CMD(SQRT, 17, false,
+    {
+    elem_t a = stackPop(cpu->stk);      
+    stackPush(cpu->stk, sqrt(a * multiplier));
+    })
+
+DEF_CMD(SIN, 18, false,
+    {
+    double a = (double) stackPop(cpu->stk);
+    a = sin(a) * multiplier;
+    stackPush(cpu->stk, (cmdel_t) a);
+    })
+
+DEF_CMD(COS, 19, false,
+    {
+    double a = (double) stackPop(cpu->stk);
+    a = cos(a) * multiplier;
+    stackPush(cpu->stk, (cmdel_t) a);
+    })
