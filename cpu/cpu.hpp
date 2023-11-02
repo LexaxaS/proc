@@ -6,15 +6,18 @@
 
 typedef int cmdel_t;
 
+const size_t ramwidth = 60;
+const size_t ramheight = 30;
+const size_t ramlen = ramwidth * ramheight;
+
 const size_t regslen = 5;
-const size_t ramlen = 900;
 const cmdel_t multiplier = 100;
 
 
 struct Cpu
     {
     Stack* stk;
-    cmdel_t regs[regslen];
+    cmdel_t* regs;
     cmdel_t* ram;
     Stack* callStack;
     };

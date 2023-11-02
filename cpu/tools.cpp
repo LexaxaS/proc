@@ -56,7 +56,6 @@ String* setPtr(char* buf, size_t nLines, size_t flen)
 
     pointers[0].linePtr = &buf[0];
 
-    printf("hyu2\n");
     while (buf_i + 2 < flen)
         {
         if (buf[buf_i] == '\r')

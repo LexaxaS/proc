@@ -24,7 +24,6 @@ je azero
     jb dneg
         sqrt 
         pop rdx
-        
         push rbx
         push -1
         mul
@@ -36,6 +35,10 @@ je azero
         div
         push rax
         div
+
+;        out
+;        push 0
+        
         pop [1]
 
         push rbx
@@ -88,7 +91,3 @@ bzero:
         push -1
         out
         hlt
-    
-
-
-

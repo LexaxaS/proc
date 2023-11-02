@@ -4,6 +4,7 @@
 #include <sys\stat.h>
 #include <assert.h>
 #include <string.h>
+#include <ctype.h>
 #include "tools.hpp"
 
 
@@ -41,6 +42,7 @@ Text setbuf(char filename_i[])
     text.nLines = countLines(buf);
     text.lines = setPtr(buf, text.nLines, text.size);
 
+    printBuf(text.lines, fileEO);
     return text;
     }  
 
@@ -55,29 +57,38 @@ String* setPtr(char* buf, size_t nLines, size_t flen)
     size_t lineLen = 0;
 
     pointers[0].linePtr = &buf[0];
-
-    printf("hyu2\n");
-    while (buf_i + 2 < flen)
+    // printf("%s\n", buf);
+    while (buf_i < flen)
         {
-        if (buf[buf_i] == '\r')
+        if (buf[buf_i] == '\r' || buf[buf_i] == '\n')
             {
-            if (buf[buf_i + 2] != '\r')
+            if (lineLen == 0)
                 {
+                ptr_j--;
+                buf[buf_i] = '\0';
+                buf_i += 1;
+                while (isalpha(buf[buf_i]) == 0 && buf_i + 2 < flen && buf[buf_i] != ';')
+                    {
+                    buf_i += 1;
+                    }
+                pointers[ptr_j].linePtr = &(buf[buf_i]);
+                ptr_j++;
+
+                }
+            else
+                {
+                buf[buf_i] = '\0';
                 pointers[ptr_j - 1].length = lineLen;
-                pointers[ptr_j].linePtr = &(buf[buf_i + 2]);
+                buf_i += 1;
+                lineLen = 0;
+                 while (isalpha(buf[buf_i]) == 0 && buf_i < flen && buf[buf_i] != ';')
+                    {
+                    buf_i += 1;
+                    }
+                pointers[ptr_j].linePtr = &(buf[buf_i]);
                 ptr_j++;
                 }
-            buf[buf_i] = '\0';
-            buf_i += 2;
-            lineLen = 0;
-            }
-        else if (buf[buf_i] == '\n')
-            {
-            pointers[ptr_j - 1].length = lineLen;
-            pointers[ptr_j].linePtr = &(buf[buf_i + 1]);
-            lineLen = 0;
-            buf_i++;
-            ptr_j++;
+
             }
         else
             {
@@ -102,13 +113,13 @@ size_t countLines(const char* str)
     return nlines;
 }
 
-void printBuf(const String* pointers, FILE *SortedEO)
+void printBuf(String* pointers, FILE *SortedEO)
     {
     assert(pointers);
-    while (*pointers->linePtr != NULL)
+    while (pointers->linePtr != NULL)
         {
-        fprintf(SortedEO, "%s\n", *pointers->linePtr);
-        *pointers++;
+        printf("<%s>         len = %d\n", pointers->linePtr, pointers->length);
+        pointers++;
         }
     }
 

@@ -28,7 +28,7 @@ bool areEqual(double a, double b);
 
 Text setbuf(char filename_i[]);
 String* setPtr(char* buf, size_t nLines, size_t flen);
-void printBuf(const String* pointers, FILE *SortedEO);
+void printBuf(String* pointers, FILE *SortedEO);
 void bufReturn(char* buf, size_t flen);
 void bufClear(void);
 

@@ -1,9 +1,7 @@
-in 
+in
 pop rdx
-push 1   
+push 1
 pop rbx
-push 0
-pop rax
 
 call fact
 push rbx
@@ -11,17 +9,18 @@ out
 hlt
 
 fact:
-    push 1
-    push rax
-    add
-    pop rax
-    push rax
     push rbx
+    push rdx
     mul
     pop rbx
-    push rax
     push rdx
+    push 1
+    sub
+    pop rdx
+    push rdx
+    push 0
     je return
         call fact
     return:
         ret
+        

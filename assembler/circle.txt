@@ -1,0 +1,80 @@
+;rax - x   rbx - y   rdx - angle
+
+in              ;x0 coord
+pop [2]        
+in              ;y0 coord
+pop [3]
+in              ;radius
+pop [4]
+
+push 60         ;width
+pop [0]
+push 30         ;height
+pop [1]
+
+for:
+    call coordcount
+    call emitram
+    push rdx
+    push 1
+    add
+    pop rdx
+    push rdx
+    push 361
+    jne for 
+
+push 0
+push 0
+push 0
+push 0
+push 0
+pop [0]
+pop [1]
+pop [2]
+pop [3]
+pop [4]
+
+rout
+hlt
+
+coordcount:
+    push rdx
+    cos 
+    push [4]
+    mul
+    pop rax
+
+    push rdx
+    sin 
+    push [4]
+    mul
+    pop rbx
+    ret
+
+
+
+emitram:
+    call ramel
+    push 1
+    pop [rcx]
+    ret
+
+
+ramel:
+    push rax
+    push 2
+    mul
+    rnd
+    push [2]
+    add
+
+    push rbx
+    rnd
+    push [3]
+    add
+    push [0]
+    mul
+    add
+    pop rcx
+
+    ret

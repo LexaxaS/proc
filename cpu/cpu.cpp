@@ -10,7 +10,7 @@ enum CMD_Commands
     {
     #define DEF_CMD(name, num, ...)\
         CMD_##name = num,
-    #include "commands.txt"
+    #include "../commands.txt"
     #undef DEF_CMD
     };
 
@@ -29,8 +29,14 @@ enum Errors
     {NO_ERROR = 0,
      CODEARR_ERROR = 1};
 
-int unknownvm(int linenum);
+struct Arg
+    {
+    cmdel_t* argval;
+    bool isram;
+    };
 
+int unknownvm(int linenum);
+error_t argdecode(Cpu* cpu, size_t* elnum, cmdel_t* codeArr, cmdel_t com, Arg* arg);
 
 error_t cpuCreate(Cpu* cpu)
     {
@@ -44,8 +50,12 @@ error_t cpuCreate(Cpu* cpu)
     stackCreate(callStack);
     cpu->callStack = callStack;
 
-    cmdel_t ram[ramlen] = {};
+    cmdel_t* ram = (cmdel_t*) calloc(ramlen, sizeof(*ram));
     cpu->ram = ram;
+
+    cmdel_t* regs = (cmdel_t*) calloc(regslen, sizeof(*regs));
+    cpu->regs = regs;
+
     return NO_ERROR;
     }
 
@@ -60,10 +70,10 @@ cmdel_t* setvmbuf(char filename_i[])
     fread(codeArr, sizeof(*codeArr), filelen, fp);    
 
     // for (size_t i = 0; i < filelen + 1; i++)
-    //     printf("%d ", codeArr[i]);
+    //     printf("%d[%d] ", codeArr[i], i);
+    // printf("\n");
 
     fclose(fp);      
-
     return codeArr;
     }  
 
@@ -79,15 +89,20 @@ int ispProgr(Cpu* cpu, cmdel_t* codeArr)
 
     size_t elnum = 0;
     int com = 0;
-
-    while (codeArr[elnum] != CMD_HLT)
+    int ar = 0;
+    bool ishlt = false;
+    while (elnum < INT_MAX && !ishlt)
         {
-        // printf("%d\n", cpu->stk->dataptr[cpu->stk->size - 1]);
         com = codeArr[elnum];
+        ar = codeArr[elnum + 1];
+        // printf("%d\n", cpu->stk->dataptr[cpu->stk->size - 1]);
+
+        // printf("%d <> %d |\n", com, ar);
+
         switch (com & ~(7 << 5))
             {
 
-            #include "commands.txt"
+            #include "../commands.txt"
 
             default: 
                 unknownvm(elnum);
@@ -95,6 +110,11 @@ int ispProgr(Cpu* cpu, cmdel_t* codeArr)
                 break;
             }
 
+        // printf("\n");
+        // for (size_t i = 0; i < cpu->stk->size; i++)
+        //     printf("%d\n", cpu->stk->dataptr[i]);
+        // printf("\n");
+        // printf("\n%d\n\n", cpu->regs[2]);
         elnum++;
         }
 
@@ -102,6 +122,29 @@ int ispProgr(Cpu* cpu, cmdel_t* codeArr)
     return errno;
     }
 
+error_t argdecode(Cpu* cpu, size_t* elnum, cmdel_t* codeArr, cmdel_t com, Arg* arg)
+    {
+    // printf("arg = %d\n", com);
+    // printf("ar = %d\n", cpu->regs[0]);
+    if (com & ARG_FORMAT_REG)
+        {
+        cpu->regs[0] = cpu->regs[codeArr[++(*elnum)]];
+        arg->argval = &(cpu->regs[codeArr[*elnum]]);
+        }
+    if (com & ARG_FORMAT_IMMED)
+        {
+        cpu->regs[0] += codeArr[++(*elnum)] * multiplier;
+        }
+    if (com & ARG_FORMAT_RAM)
+        {
+        arg->argval = &(cpu->ram[(int) (cpu->regs[0] / multiplier)]);
+        }
+    else if (com & ARG_FORMAT_IMMED)
+        {
+        arg->argval = &(cpu->regs[0]);
+        }
+    return NoMistakes;
+    }
 
 int unknownvm(int linenum)
     {

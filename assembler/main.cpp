@@ -10,11 +10,9 @@
 
 int main()
     {
-
-    cmdel_t* codeArray = (cmdel_t*) calloc(CodeArrayMaxLen, sizeof(*codeArray));
-    // compile("data.txt", codeArray);
-    // compile("quadratic.txt", codeArray);
-    // compile("fact.txt", codeArray);
-
+    // compile("data.txt", "assemblerfile.bin");
+    // compile("quadratic.txt", "assemblerfile.bin");
+    // compile("fact.txt", "assemblerfile.bin");
+    compile("circle.txt", "assemblerfile.bin");
     return 0;
     }
