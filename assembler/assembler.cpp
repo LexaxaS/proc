@@ -49,22 +49,26 @@ struct Label
     };
 
 
-error_t writeInFile(FILE* filedest, cmdel_t* codeArray, size_t arrLen);
-error_t writeInFileBin(FILE* filedest, cmdel_t* codeArray, size_t arrLen);
+error_t _writeInFile(FILE* filedest, cmdel_t* codeArray, size_t arrLen);
+error_t _writeInFileBin(FILE* filedest, cmdel_t* codeArray, size_t arrLen);
 
-error_t SetArg(String* line, cmdel_t* codeArray, cmdel_t code, size_t* position, size_t cmdLen, Label* labels, size_t* freelabel, bool isscndRun);
-error_t parseLine(cmdel_t* codeArray, String* line, size_t* position, bool isscndRun, Label* labels, size_t* freelabel);
+error_t _oneRun(cmdel_t* codeArray, Text* codeStruct, bool scndrun, Label* labels, size_t* freelabel, size_t* arrLen);
+error_t _parseLine(cmdel_t* codeArray, String* line, size_t* position, bool isscndRun, Label* labels, size_t* freelabel);
+error_t _labelprocess(Label* labels, size_t* freelabel, char* labelstrt, char* labelend, size_t position);
+error_t _SetArg(String* line, cmdel_t* codeArray, cmdel_t code, size_t* position, size_t cmdLen, Label* labels, size_t* freelabel, bool isscndRun);
 
-error_t regSearch(const char** strtptr, Arg* arg);
-error_t immedSearch(const char** strtptr, Arg* arg);
-error_t labelSearch(const char** strtptr, size_t linelen, Arg* arg, Label* labels, size_t* freelabel, bool isscndRun, size_t* pos);
+error_t _ramSearch(const char** strtptr, Arg* arg);
+error_t _regSearch(const char** strtptr, Arg* arg);
+error_t _immedSearch(const char** strtptr, Arg* arg);
+error_t _labelSearch(const char** strtptr, size_t linelen, Arg* arg, Label* labels, size_t* freelabel, bool isscndRun, size_t* pos);
 
-error_t labelprocess(Label* labels, size_t* freelabel, char* labelstrt, char* labelend, size_t position);
+error_t _destruct(Text* codeStruct, cmdel_t* codeArr);
 
-error_t destruct(Text* codeStruct, cmdel_t* codeArr);
-
-error_t encodeReg(int *regNum, char* reg)
+error_t _encodeReg(int *regNum, char* reg)
     {
+    MY_ASSERT_HARD(regNum);
+    MY_ASSERT_HARD(reg);
+
     if (strcmp(reg, "rax") == 0)
         *regNum = REG_RAX;
     else if (strcmp(reg, "rbx") == 0)
@@ -73,16 +77,21 @@ error_t encodeReg(int *regNum, char* reg)
         *regNum = REG_RCX;
     else if (strcmp(reg, "rdx") == 0)
         *regNum = REG_RDX;
-    return errno;
+
+    return NO_ERROR;
     }
 
-error_t emitCode(Arg* arg, cmdel_t* codeArr, size_t* pos, cmdel_t code, bool isscndRun)
+error_t _emitCode(Arg* arg, cmdel_t* codeArr, size_t* pos, cmdel_t code, bool isscndRun)
     { 
-    printf("arg, %d\n", isscndRun);
+    MY_ASSERT_HARD(arg);
+    MY_ASSERT_HARD(codeArr);
+    MY_ASSERT_HARD(pos)
+
     if (isscndRun)
         codeArr[(*pos)++] = code;
     else
         (*pos)++;
+
     if (arg->argFormat & ARG_FORMAT_REG)
         {
         if (isscndRun)
@@ -90,6 +99,7 @@ error_t emitCode(Arg* arg, cmdel_t* codeArr, size_t* pos, cmdel_t code, bool iss
         else
             (*pos)++;
         }
+
     if (arg->argFormat & ARG_FORMAT_IMMED)
         {
         if (isscndRun)
@@ -97,22 +107,28 @@ error_t emitCode(Arg* arg, cmdel_t* codeArr, size_t* pos, cmdel_t code, bool iss
         else
             (*pos)++;
         }
-    return errno;
+
+    return NO_ERROR;
     }
 
-error_t emitCodeNoArg(cmdel_t* codeArr, size_t* pos, cmdel_t code, bool isscndRun)
+error_t _emitCodeNoArg(cmdel_t* codeArr, size_t* pos, cmdel_t code, bool isscndRun)
     {
-    printf("noarg, %d\n", isscndRun);
+    MY_ASSERT_HARD(codeArr);
+    MY_ASSERT_HARD(pos);
+
     if (isscndRun)
         codeArr[(*pos)++] = code;
     else
         (*pos)++;
-    return errno;
+
+    return NO_ERROR;
     }
 
-error_t emitCodeLabel(cmdel_t* codeArr, size_t* pos, cmdel_t code, cmdel_t label, bool isscndRun)
+error_t _emitCodeLabel(cmdel_t* codeArr, size_t* pos, cmdel_t code, cmdel_t label, bool isscndRun)
     {
-    printf("labemit, %d\n", isscndRun);
+    MY_ASSERT_HARD(codeArr);
+    MY_ASSERT_HARD(pos);
+
     if (isscndRun)
         {
         codeArr[(*pos)++] = code;
@@ -122,24 +138,14 @@ error_t emitCodeLabel(cmdel_t* codeArr, size_t* pos, cmdel_t code, cmdel_t label
         {
         (*pos) += 2;
         }
-    return errno;
-    }
 
-error_t oneRun(cmdel_t* codeArray, Text* codeStruct, bool scndrun, Label* labels, size_t* freelabel, size_t* arrLen)
-    {
-    size_t position = 0;
-
-    for (size_t curLine = 0; curLine < codeStruct->nLines - 1; curLine++)
-        {
-        parseLine(codeArray, &codeStruct->lines[curLine], &position, scndrun, labels, freelabel);    
-        printf("pos = %d\n", position);
-        }
-    *arrLen = position;
     return NO_ERROR;
     }
 
 error_t compile(char* fpname, char* fpdestname)
     {
+    MY_ASSERT_HARD(fpname);
+    MY_ASSERT_HARD(fpdestname);
 
     FILE* fpdest = fileopenerW("notbin.txt");
     FILE* fpdestbin = fileopenerWB(fpdestname);
@@ -152,34 +158,53 @@ error_t compile(char* fpname, char* fpdestname)
 
     size_t arrLen = 0;
 
-    oneRun(codeArray, &codeStruct, FIRST_RUN, labels, &freelabel, &arrLen);
+    _oneRun(codeArray, &codeStruct, FIRST_RUN, labels, &freelabel, &arrLen);
 
-    oneRun(codeArray, &codeStruct, SECOND_RUN, labels, &freelabel, &arrLen);
+    _oneRun(codeArray, &codeStruct, SECOND_RUN, labels, &freelabel, &arrLen);
     
     for (size_t i = 0; i < arrLen; i++)
         {
         printf("%d ", codeArray[i]);
         }
 
-    writeInFile(fpdest, codeArray, arrLen);
-    writeInFileBin(fpdestbin, codeArray, arrLen);
-    size_t i = 0;
-    printf("\n");
-    while (labels[i].codepos != 0)   
-        {
-        printf("lab = |%s|, %d\n", labels[i].label, labels[i].codepos);
-        i++;
-        }
-    destruct(&codeStruct, codeArray);
-    return errno;
+    _writeInFile(fpdest, codeArray, arrLen);
+    _writeInFileBin(fpdestbin, codeArray, arrLen);
+
+    _destruct(&codeStruct, codeArray);
+    return NO_ERROR;
     }
 
-error_t parseLine(cmdel_t* codeArray, String* line, size_t* position, bool isscndRun, Label* labels, size_t* freelabel)
+error_t _oneRun(cmdel_t* codeArray, Text* codeStruct, bool scndrun, Label* labels, size_t* freelabel, size_t* arrLen)
     {
+    MY_ASSERT_HARD(codeArray);
+    MY_ASSERT_HARD(codeStruct);
+    MY_ASSERT_HARD(labels);
+    MY_ASSERT_HARD(freelabel);
+    MY_ASSERT_HARD(arrLen);
+
+    size_t position = 0;
+
+    for (size_t curLine = 0; curLine < codeStruct->nLines - 1; curLine++)
+        {
+        _parseLine(codeArray, &codeStruct->lines[curLine], &position, scndrun, labels, freelabel);    
+        // printf("pos = %d\n", position);
+        }
+
+    *arrLen = position;
+    return NO_ERROR;
+    }
+
+error_t _parseLine(cmdel_t* codeArray, String* line, size_t* position, bool isscndRun, Label* labels, size_t* freelabel)
+    {
+    MY_ASSERT_HARD(codeArray);
+    MY_ASSERT_HARD(line);
+    MY_ASSERT_HARD(position);
+    MY_ASSERT_HARD(labels);
+    MY_ASSERT_HARD(freelabel);
+
     char* lineptr = line->linePtr;
     if (*lineptr == '\n' || *lineptr == '\r')
         return NO_ERROR;
-
 
     char* commentptr = (char*)strchr(lineptr, ';');
     if (commentptr)
@@ -191,7 +216,7 @@ error_t parseLine(cmdel_t* codeArray, String* line, size_t* position, bool isscn
         if (isscndRun)
             return NO_ERROR;
         else
-            labelprocess(labels, freelabel, lineptr, labelend, *position);
+            _labelprocess(labels, freelabel, lineptr, labelend, *position);
         return NO_ERROR;
         }
 
@@ -203,27 +228,33 @@ error_t parseLine(cmdel_t* codeArray, String* line, size_t* position, bool isscn
         if (strcasecmp(cmd, #name) == 0)                                                                                        \
             {                                                                                                                   \
             if (isarg)                                                                                                          \
-                SetArg(line, codeArray, CMD_##name, position, cmdlen, labels, freelabel, isscndRun);                            \
+                _SetArg(line, codeArray, CMD_##name, position, cmdlen, labels, freelabel, isscndRun);                           \
             else                                                                                                                \
-                emitCodeNoArg(codeArray, position, CMD_##name, isscndRun);                                                      \ 
+                _emitCodeNoArg(codeArray, position, CMD_##name, isscndRun);                                                     \
             }                                                                                                                   \
         else
 
 
     if (sscanf(line->linePtr, "%s%n", cmd, &cmdlen) != 1)
         return SYNTAX_ERROR;
-    printf("\n<%s>\n", cmd);
+
+    // printf("\n<%s>\n", cmd);
 
     #include "../commands.txt"
 
     /*else*/  printf("unknown\n");
     
     #undef DEF_CMD
-    return errno;
+    return NO_ERROR;
     }
 
-error_t labelprocess(Label* labels, size_t* freelabel, char* labelstrt, char* labelend, size_t position)
+error_t _labelprocess(Label* labels, size_t* freelabel, char* labelstrt, char* labelend, size_t position)
     {
+    MY_ASSERT_HARD(labels);
+    MY_ASSERT_HARD(freelabel);
+    MY_ASSERT_HARD(labelstrt);
+    MY_ASSERT_HARD(labelend);
+
     if (*freelabel > MaxLabelNum - 1)
         return OVER_MAX_LABELS;
 
@@ -241,17 +272,38 @@ error_t labelprocess(Label* labels, size_t* freelabel, char* labelstrt, char* la
     labels[*freelabel].label = label;
     labels[*freelabel].codepos = position;
     (*freelabel)++;
+
     return NO_ERROR;
     }
 
 
-error_t SetArg(String* line, cmdel_t* codeArray, cmdel_t code, size_t* position, size_t cmdLen, Label* labels, size_t* freelabel, bool isscndRun)
+error_t _SetArg(String* line, cmdel_t* codeArray, cmdel_t code, size_t* position, size_t cmdLen, Label* labels, size_t* freelabel, bool isscndRun)
     {
+    MY_ASSERT_HARD(line);
+    MY_ASSERT_HARD(codeArray);
+    MY_ASSERT_HARD(position);
+    MY_ASSERT_HARD(labels);
+    MY_ASSERT_HARD(freelabel);
+
     Arg arg = {};
-    // printf("|%s|, %d\n", line->linePtr, line->length);
     const char* strtptr = line->linePtr + cmdLen;
-    const char* stBracketPtr = strchr(strtptr, '[');
-    const char* clBracketPtr = strchr(strtptr, ']');
+    size_t scanlen = 0;
+
+    _ramSearch(&strtptr, &arg);
+    _regSearch(&strtptr, &arg);
+    _immedSearch(&strtptr, &arg);
+    _labelSearch(&strtptr, line->length, &arg, labels, freelabel, isscndRun, position);
+
+    code |= arg.argFormat;
+    _emitCode(&arg, codeArray, position, code, isscndRun);
+
+    return NO_ERROR;
+    }
+
+error_t _ramSearch(const char** strtptr, Arg* arg)
+    {
+    const char* stBracketPtr = strchr(*strtptr, '[');
+    const char* clBracketPtr = strchr(*strtptr, ']');
 
     if (stBracketPtr or clBracketPtr)
         {
@@ -259,24 +311,21 @@ error_t SetArg(String* line, cmdel_t* codeArray, cmdel_t code, size_t* position,
             {
             return SYNTAX_ERROR;
             }
-        strtptr = stBracketPtr + 1;
-        arg.argFormat |= ARG_FORMAT_RAM;
+        *strtptr = stBracketPtr + 1;
+        arg->argFormat |= ARG_FORMAT_RAM;
         }
-
-    size_t scanlen = 0;
-    regSearch(&strtptr, &arg);
-    immedSearch(&strtptr, &arg);
-    labelSearch(&strtptr, line->length, &arg, labels, freelabel, isscndRun, position);
-
-    code |= arg.argFormat;
-    emitCode(&arg, codeArray, position, code, isscndRun);
-    return errno;
+    return NO_ERROR;
     }
 
-error_t regSearch(const char** strtptr, Arg* arg)
+error_t _regSearch(const char** strtptr, Arg* arg)
     {
+    MY_ASSERT_HARD(strtptr);
+    MY_ASSERT_HARD(*strtptr);
+    MY_ASSERT_HARD(arg);
+
     size_t scanlen = 0;
     cmdel_t reg = 0;
+
     if (sscanf(*strtptr, " r%cx %n", &reg, &scanlen) == 1)
         {
         if (scanlen >= 3)
@@ -288,32 +337,48 @@ error_t regSearch(const char** strtptr, Arg* arg)
             *strtptr += scanlen;
             }
         }
+
     return NO_ERROR;
     }
 
-error_t immedSearch(const char** strtptr, Arg* arg)
+error_t _immedSearch(const char** strtptr, Arg* arg)
     {
+    MY_ASSERT_HARD(strtptr);
+    MY_ASSERT_HARD(*strtptr);
+    MY_ASSERT_HARD(arg);
+
     size_t scanlen = 0;
     cmdel_t immed = 0;
+
     if (**strtptr == '+')
         *strtptr += 1;
+
     if (sscanf(*strtptr, " %"prELEM" %n", &immed, &scanlen) == 1)
         {
         arg->argFormat |= ARG_FORMAT_IMMED;
         arg->immed = immed;
         *strtptr += scanlen;
         }
+
     return NO_ERROR;
     }
 
-error_t labelSearch(const char** strtptr, size_t linelen, Arg* arg, Label* labels, size_t* freelabel, bool isscndRun, size_t* pos)
+error_t _labelSearch(const char** strtptr, size_t linelen, Arg* arg, Label* labels, size_t* freelabel, bool isscndRun, size_t* pos)
     {
+    MY_ASSERT_HARD(strtptr);
+    MY_ASSERT_HARD(*strtptr);
+    MY_ASSERT_HARD(arg);
+    MY_ASSERT_HARD(labels);
+    MY_ASSERT_HARD(freelabel);
+    MY_ASSERT_HARD(pos);
+
     size_t scanlen = 0;
     char* label = (char*) calloc(linelen, sizeof(*label));
+
     if (sscanf(*strtptr, "%s%n", label, &scanlen) == 1 and *label != ']')
         {
-        // printf("                    label = |%s|\n", label);
         *strtptr += scanlen;
+
         for (size_t i = 0; i < *freelabel; i++) 
             {
             if (strcmp(label, labels[i].label) == 0)
@@ -323,39 +388,50 @@ error_t labelSearch(const char** strtptr, size_t linelen, Arg* arg, Label* label
                 return NO_ERROR;
                 }
             }
+
         if (isscndRun)
             return SYNTAX_ERROR;
         else
             *pos += 1;
         }
+
     return NO_ERROR;
     }
 
-error_t writeInFile(FILE* filedest, cmdel_t* codeArray, size_t arrLen)
+error_t _writeInFile(FILE* filedest, cmdel_t* codeArray, size_t arrLen)
     {
-    printf("\n\n\n");
+    MY_ASSERT_HARD(filedest);
+    MY_ASSERT_HARD(codeArray);
 
     for (size_t i = 0; i < arrLen; i++)
         {
         fprintf(filedest, "%d :   %d\n", i + 1, codeArray[i]); 
         }
+
     fclose(filedest);
     return errno;
     }
 
-error_t writeInFileBin(FILE* filedest, cmdel_t* codeArray, size_t arrLen)
+error_t _writeInFileBin(FILE* filedest, cmdel_t* codeArray, size_t arrLen)
     {
-    printf("\nbin\n\n");
+    MY_ASSERT_HARD(filedest);
+    MY_ASSERT_HARD(codeArray);
 
     fwrite(codeArray, sizeof(*codeArray), arrLen, filedest);
+
     for (size_t i = 0; i < arrLen; i++)
-        printf("<%d> ", codeArray[i]);
+        printf("%d ", codeArray[i]);
+    printf("\n");
+    
     fclose(filedest);
     return errno;
     }
 
-error_t destruct(Text* codeStruct, cmdel_t* codeArr)
+error_t _destruct(Text* codeStruct, cmdel_t* codeArr)
     {
+    MY_ASSERT_HARD(codeStruct);
+    MY_ASSERT_HARD(codeArr);
+
     free(codeStruct->bufPtr);
     free(codeStruct->lines);
     free(codeArr);

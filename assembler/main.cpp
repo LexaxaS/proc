@@ -10,9 +10,11 @@
 
 int main()
     {
+
     // compile("data.txt", "assemblerfile.bin");
     // compile("quadratic.txt", "assemblerfile.bin");
     // compile("fact.txt", "assemblerfile.bin");
     compile("circle.txt", "assemblerfile.bin");
+
     return 0;
     }

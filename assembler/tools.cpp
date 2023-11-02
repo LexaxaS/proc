@@ -42,7 +42,7 @@ Text setbuf(char filename_i[])
     text.nLines = countLines(buf);
     text.lines = setPtr(buf, text.nLines, text.size);
 
-    printBuf(text.lines, fileEO);
+    // printBuf(text.lines);
     return text;
     }  
 
@@ -113,7 +113,7 @@ size_t countLines(const char* str)
     return nlines;
 }
 
-void printBuf(String* pointers, FILE *SortedEO)
+void printBuf(String* pointers)
     {
     assert(pointers);
     while (pointers->linePtr != NULL)

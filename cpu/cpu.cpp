@@ -27,7 +27,8 @@ enum ArgFormats
 
 enum Errors
     {NO_ERROR = 0,
-     CODEARR_ERROR = 1};
+     CODEARR_ERROR = 1,
+     RAM_NEG_ARG = 2};
 
 struct Arg
     {
@@ -59,7 +60,7 @@ error_t cpuCreate(Cpu* cpu)
     return NO_ERROR;
     }
 
-cmdel_t* setvmbuf(char filename_i[])
+cmdel_t* setvmbuf(char* filename_i)
     {
     MY_ASSERT_HARD(filename_i);
 
@@ -89,15 +90,12 @@ int ispProgr(Cpu* cpu, cmdel_t* codeArr)
 
     size_t elnum = 0;
     int com = 0;
-    int ar = 0;
+
     bool ishlt = false;
     while (elnum < INT_MAX && !ishlt)
         {
         com = codeArr[elnum];
-        ar = codeArr[elnum + 1];
-        // printf("%d\n", cpu->stk->dataptr[cpu->stk->size - 1]);
-
-        // printf("%d <> %d |\n", com, ar);
+        // printf("%d\n", com);
 
         switch (com & ~(7 << 5))
             {
@@ -115,35 +113,43 @@ int ispProgr(Cpu* cpu, cmdel_t* codeArr)
         //     printf("%d\n", cpu->stk->dataptr[i]);
         // printf("\n");
         // printf("\n%d\n\n", cpu->regs[2]);
+
         elnum++;
         }
 
     #undef DEF_CMD
-    return errno;
+    return NO_ERROR;
     }
 
 error_t argdecode(Cpu* cpu, size_t* elnum, cmdel_t* codeArr, cmdel_t com, Arg* arg)
     {
-    // printf("arg = %d\n", com);
-    // printf("ar = %d\n", cpu->regs[0]);
+    MY_ASSERT_HARD(cpu);
+    MY_ASSERT_HARD(elnum);
+    MY_ASSERT_HARD(codeArr);
+    MY_ASSERT_HARD(arg);
+
     if (com & ARG_FORMAT_REG)
         {
         cpu->regs[0] = cpu->regs[codeArr[++(*elnum)]];
         arg->argval = &(cpu->regs[codeArr[*elnum]]);
         }
+
     if (com & ARG_FORMAT_IMMED)
         {
         cpu->regs[0] += codeArr[++(*elnum)] * multiplier;
         }
+
     if (com & ARG_FORMAT_RAM)
         {
         arg->argval = &(cpu->ram[(int) (cpu->regs[0] / multiplier)]);
         }
+
     else if (com & ARG_FORMAT_IMMED)
         {
         arg->argval = &(cpu->regs[0]);
         }
-    return NoMistakes;
+
+    return NO_ERROR;
     }
 
 int unknownvm(int linenum)
